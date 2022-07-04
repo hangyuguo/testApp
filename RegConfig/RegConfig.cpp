@@ -7,6 +7,48 @@
 #include <tchar.h>
 
 using namespace std;
+int execmd(char* cmd, char* result) {
+	char buffer[128];                         // 缓冲区                        
+	FILE* pipe = _popen(cmd, "r");            // 管道 
+
+	// 管道打开失败
+	if (!pipe) { return 0; }
+
+	// 检测管道中的结束符，0表示没有结束
+	while (!feof(pipe)) {
+		// 从管道中读取数据
+		if (fgets(buffer, 128, pipe)) {
+			// 拼接 char
+			strcat_s(result, 128, buffer);
+		}
+	}
+
+	//关闭管道 
+	_pclose(pipe);
+
+	return 1;
+}
+
+void querySysLog()
+{
+	char result[0x7ffff] = "";        // 存放结果
+
+	string strCmd = "wevtutil qe System /c:300 /rd:true /f:text";
+
+		// 获取命令行返回值（保险起见这里获取 300 条日志信息）
+	if (execmd((char*)strCmd.c_str(), result) == 1) {
+		cout << result << endl;
+	}
+
+	// 查找关键数据
+	string s = result;
+	while ((s.find("igfx")) != -1) {
+		cout << "找到了 igfx " << endl;
+		break;
+	}
+
+	system("pause");
+}
 
 
 int main()
