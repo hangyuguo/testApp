@@ -1,3 +1,11 @@
 .vs/
 CPUTemp/obj/
 Debug/
+async_test/Release/
+ElectronLearning/ex1/node_modules/
+ElectronLearning/ex1/out/
+HardwareInfo/Release/
+NetworkDetect/Release/
+Release/
+RustLearning/ex02/hello_cargo/target/
+RustLearning/ex03/guessing_game/target/

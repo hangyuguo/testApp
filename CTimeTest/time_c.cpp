@@ -82,3 +82,23 @@ int main()
 	system("pause");
 	return 0;
 }
+
+void stringParseTest() {
+	string cert_details = "";
+}
+
+
+//Not After : Nov 10 01:53:38 2023 GMT
+
+void getCSTTimeFormat(char* pStdTimeFormat)
+{
+	time_t nTimeStamp;
+	time(&nTimeStamp);
+	char pTmpString[256] = { 0 };
+	tm* pTmStruct = localtime(&nTimeStamp);
+	sprintf(pTmpString, "%04d-%02d-%02d %02d:%02d:%02d", pTmStruct->tm_year + 1900, pTmStruct->tm_mon + 1, pTmStruct->tm_mday, \
+		pTmStruct->tm_hour, pTmStruct->tm_min, pTmStruct->tm_sec);
+
+	strcpy(pStdTimeFormat, pTmpString);
+	return;
+}

@@ -1,5 +1,51 @@
-﻿#include <iostream>
+﻿#include "HardwareInfo.h"
+
+#include <iostream>
+#include <Windows.h>
+#include <stdio.h>
+
+extern "C" {
+#include <Powrprof.h>
+}
+#pragma comment(lib, "Powrprof.lib")
+
+#include <setupapi.h>
+#pragma comment(lib, "setupapi.lib")
+#include <cfgmgr32.h>
+
 using namespace std;
+
+
+//判断台式机还是笔记本
+void computerType()
+{
+	SYSTEM_POWER_STATUS a;
+	GetSystemPowerStatus(&a);
+
+	if (a.BatteryFlag == 128 || a.BatteryFlag == 255)
+	{
+		printf("台式电脑\n");
+	}
+	else
+	{
+		printf("笔记本电脑\n");
+	}
+}
+
+void computerType2() {
+	SYSTEM_POWER_CAPABILITIES  oPowerCapabilities;
+
+	CallNtPowerInformation(POWER_INFORMATION_LEVEL::SystemPowerCapabilities, NULL, 0, &oPowerCapabilities, sizeof(oPowerCapabilities));
+
+	if (oPowerCapabilities.LidPresent == 1)
+	{
+		cout << "Laptop" << endl;
+	}
+	else
+	{
+		cout << "PC" << endl;
+	}
+}
 
 //#using "OpenHardwareMonitorLib.dll"  //DLL所在的路径
 //using namespace OpenHardwareMonitor;
@@ -32,24 +78,7 @@ using namespace std;
 //			
 //}
 
-#include <Windows.h>
-#include <stdio.h>
 
-//判断台式机还是笔记本
-void computerType()
-{
-	SYSTEM_POWER_STATUS a;
-	GetSystemPowerStatus(&a);
-
-	if (a.BatteryFlag == 128 || a.BatteryFlag == 255)
-	{
-		printf("台式电脑\n");
-	}
-	else
-	{
-		printf("笔记本电脑\n");
-	}
-}
 
 //判断系统版本 7/8/10
 void getSysVersion()
@@ -172,14 +201,45 @@ void getSysInfo()
 		
 }
 
-int main(int argc, char** argv)
+#include <NetCon.h>
+void ChangeNetState(bool bEnable)
 {
-	//computerType();
-	//getSysVersion();
-	//getScreenScale();
-	//GetZoom();
-	getSysInfo();
-	system("pause");
-	return 0;
+	CoInitialize(NULL);
+	INetConnectionManager* pNetManager;
+	INetConnection* pNetConnection;
+	IEnumNetConnection* pEnum;
 
+	if (S_OK != CoCreateInstance(CLSID_ConnectionManager, NULL, CLSCTX_SERVER, IID_INetConnectionManager, (void**)&pNetManager))
+	{
+		return;
+	}
+
+	pNetManager->EnumConnections(NCME_DEFAULT, &pEnum);
+	pNetManager->Release();
+	if (NULL == pEnum)
+	{
+		return;
+	}
+
+	ULONG celtFetched;
+	while (pEnum->Next(1, &pNetConnection, &celtFetched) == S_OK)
+	{
+		NETCON_PROPERTIES* properties;
+		pNetConnection->GetProperties(&properties);
+		wstring name = properties->pszwName; //网络连接的名称
+		wstring DeviceName = properties->pszwDeviceName; //网卡名称
+		
+
+		if (DeviceName.find(L"ZTN") != wstring::npos) {
+			if (properties->Status == NCS_DISCONNECTED) {
+				cout << "ZTN网卡被禁用" << endl;
+				pNetConnection->Connect();
+			}
+		}
+
+		//cout << pNetConnection->Disconnect() << endl; //禁用网卡
+		//cout << pNetConnection->Connect() << endl;    //启用网卡
+	}
+	CoUninitialize();
+	return;
 }

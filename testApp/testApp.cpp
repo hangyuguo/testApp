@@ -202,8 +202,15 @@ void getFileSize()
 	}
 }
 
+long long GetDirectorySize(string strSrcPath);
+
 int main()
 {
+	string updateDir = "C:\\Users\\guohangyu\\AppData\\Local\\Netease\\XiaoYiHelper\\XiaoYiHelper\\Update";
+	auto ret = GetDirectorySize(updateDir);
+	cout << "Dir size:" << ret << endl;
+	return 0;
+
 	getFileSize();
 
 	return 1;
@@ -337,4 +344,42 @@ std::string getRandomStr2(int length)
 	}
 
 	return ans;
+}
+
+
+long long GetDirectorySize(string strSrcPath)
+{
+	WIN32_FIND_DATAA data;
+	string strPath;
+	long long size = 0;
+	if (strSrcPath.empty())
+	{
+		return 0;
+	}
+	strPath = strSrcPath;
+	strPath += "\\*";
+	HANDLE hFile = FindFirstFileA(strPath.c_str(), &data);
+	if (INVALID_HANDLE_VALUE != hFile)
+	{
+		while (FindNextFileA(hFile, &data))
+		{
+			if (FILE_ATTRIBUTE_DIRECTORY & data.dwFileAttributes)
+			{
+				if (L'.' != data.cFileName[0])
+				{
+					strPath = strSrcPath;
+					strPath += "\\";
+					strPath += data.cFileName;
+					size += GetDirectorySize(strPath);
+				}
+			}
+			else
+			{
+				LARGE_INTEGER li = { data.nFileSizeLow, (LONG)data.nFileSizeHigh };
+				size += li.QuadPart;
+			}
+		}
+		FindClose(hFile);
+	}
+	return size;
 }
