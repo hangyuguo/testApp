@@ -243,3 +243,299 @@ void ChangeNetState(bool bEnable)
 	CoUninitialize();
 	return;
 }
+
+
+bool driverRestart()
+{
+	clock_t start, end;
+	//等待vpn初始化完成信息
+	start = clock();
+
+	bool bResult = false;
+
+	CoInitialize(NULL);
+	INetConnectionManager* pNetManager;
+	INetConnection* pNetConnection;
+	IEnumNetConnection* pEnum;
+
+	if (S_OK != CoCreateInstance(CLSID_ConnectionManager, NULL, CLSCTX_SERVER, IID_INetConnectionManager, (void**)&pNetManager))
+	{
+		cout << "ZTN网卡状态检测失败" << endl;
+		return bResult;
+	}
+
+	pNetManager->EnumConnections(NCME_DEFAULT, &pEnum);
+	pNetManager->Release();
+	if (NULL == pEnum)
+	{
+		cout << "ZTN网卡状态检测失败" << endl;
+		return bResult;
+	}
+
+	ULONG celtFetched;
+	while (pEnum->Next(1, &pNetConnection, &celtFetched) == S_OK)
+	{
+		wstring name, deviceName;
+		NETCON_PROPERTIES* properties;
+		pNetConnection->GetProperties(&properties);
+		if (properties->pszwName) {
+			name = properties->pszwName; //网络连接的名称
+		}
+		if (properties->pszwDeviceName) {
+			deviceName = properties->pszwDeviceName; //网卡名称
+		}
+
+		if (deviceName.find(L"ZTN") != wstring::npos) {
+			//如果找到 ztn网卡 先默认为启用状态
+			bResult = true;
+			if (properties->Status == NCS_MEDIA_DISCONNECTED) {
+				cout << "先禁用ZTN网卡" << endl;
+				pNetConnection->Disconnect();
+			}
+			cout << "启用ZTN网卡" << endl;
+			pNetConnection->Connect();
+		}
+	}
+	CoUninitialize();
+
+
+	end = clock();
+	double dTimeStamp = (double)(end - start) / CLOCKS_PER_SEC;
+	cout << "driverRestart TimeStamp:" << dTimeStamp << endl;
+
+	return bResult;
+}
+
+
+#include <atlcomcli.h>
+#include <Wbemidl.h>
+#pragma comment(lib, "wbemuuid.lib")
+
+#pragma comment(lib, "comsuppw.lib")
+
+bool DetectMoniter(std::vector<CAPITAL_HARDWARE>& moniter_arr)
+{
+	InitComLibrary init;
+	WmicQuery query;
+	query.ExecQuery(L"SELECT * FROM WmiMonitorID", L"ROOT\\WMI");
+	IEnumWbemClassObject* pEnum = query.pEnum_;
+	if (pEnum == NULL)
+	{
+		return false;
+	}
+
+	bool bRet = false;
+
+	do {
+		CComPtr<IWbemClassObject> pObj;
+		DWORD dwReturn = 0;
+		if (S_OK != pEnum->Next(WBEM_INFINITE, 1, &pObj, &dwReturn)) {
+			break;
+		}
+
+		CAPITAL_HARDWARE moniterItem;
+		CComVariant varValue;
+		if (pObj->Get(L"UserFriendlyName", 0, &varValue, NULL, 0) == S_OK && varValue.vt > 8192)
+		{
+			LONG l = 0;
+			LONG h = 0;
+			std::wstring strTemp;
+			SafeArrayGetLBound(varValue.parray, 1, &l);
+			SafeArrayGetUBound(varValue.parray, 1, &h);
+			long Size = h - l + 1;
+			for (long Idx = l; Idx < Size; ++Idx)
+			{
+				int nVl = 0;
+				SafeArrayGetElement(varValue.parray, &Idx, &nVl);
+				strTemp.push_back((wchar_t)nVl);
+			}
+
+			moniterItem.strName = strTemp;
+		}
+
+		varValue.Clear();
+
+		if (moniterItem.strName.empty()) {
+			break;
+		}
+
+
+		if (pObj->Get(L"SerialNumberID", 0, &varValue, NULL, 0) == S_OK)
+		{
+			LONG l = 0;
+			LONG h = 0;
+			std::wstring strTemp;
+			SafeArrayGetLBound(varValue.parray, 1, &l);
+			SafeArrayGetUBound(varValue.parray, 1, &h);
+			long Size = h - l + 1;
+			for (long Idx = l; Idx < Size; ++Idx)
+			{
+				int nVl = 0;
+				SafeArrayGetElement(varValue.parray, &Idx, &nVl);
+				strTemp.push_back((wchar_t)nVl);
+			}
+
+			moniterItem.strSerialNumber = strTemp;
+		}
+		varValue.Clear();
+		if (pObj->Get(L"InstanceName", 0, &varValue, NULL, 0) == S_OK)
+		{
+			moniterItem.strDeviceInstanceName = varValue.bstrVal;
+		}
+		varValue.Clear();
+
+		int nWeek = 0;
+		if (pObj->Get(L"WeekOfManufacture", 0, &varValue, NULL, 0) == S_OK)
+		{
+			nWeek = varValue.uiVal;
+		}
+		varValue.Clear();
+
+		int nYear = 0;
+		if (pObj->Get(L"YearOfManufacture", 0, &varValue, NULL, 0) == S_OK)
+		{
+			nYear = varValue.uintVal;
+		}
+
+		wchar_t szProductDate[64] = { 0 };
+		swprintf_s(szProductDate, L"%d年%d周", nYear, nWeek);
+		moniterItem.mapProporties[L"productDate"] = szProductDate;
+
+		varValue.Clear();
+		if (pObj->Get(L"ManufacturerName", 0, &varValue, NULL, 0) == S_OK)
+		{
+			LONG l = 0;
+			LONG h = 0;
+			std::wstring strTemp;
+			SafeArrayGetLBound(varValue.parray, 1, &l);
+			SafeArrayGetUBound(varValue.parray, 1, &h);
+			long Size = h - l + 1;
+			for (long Idx = l; Idx < Size; ++Idx)
+			{
+				int nVl = 0;
+				SafeArrayGetElement(varValue.parray, &Idx, &nVl);
+				strTemp.push_back((wchar_t)nVl);
+			}
+
+			moniterItem.strManufacturer = strTemp;
+		}
+
+		moniterItem.hardType = L"MONITOR";
+		moniter_arr.push_back(moniterItem);
+		bRet = true;
+	} while (TRUE);
+
+	return bRet;
+}
+
+#include <comutil.h>
+
+WmicQuery::WmicQuery()
+{
+	pEnum_ = NULL;
+}
+
+WmicQuery::~WmicQuery()
+{
+	ClearResult();
+}
+
+IEnumWbemClassObject* WmicQuery::ExecQuery(const wchar_t* pQuery, const wchar_t* pRoot)
+{
+	ClearResult();
+	IWbemServices* pService = service_.GetService(pRoot);
+	if (pService == nullptr)
+	{
+		return nullptr;
+	}
+
+	if (FAILED(pService->ExecQuery(_bstr_t("WQL"), _bstr_t(pQuery),
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL,
+		&pEnum_)))
+	{
+		return nullptr;
+	}
+
+	return pEnum_;
+}
+
+void WmicQuery::ClearResult()
+{
+	if (pEnum_)
+	{
+		pEnum_->Release();
+		pEnum_ = NULL;
+	}
+}
+
+WmiService::WmiService()
+{
+	pLoc_ = NULL;
+	pSvc_ = NULL;
+}
+
+WmiService::~WmiService()
+{
+	Clear();
+}
+
+IWbemServices* WmiService::GetService(const wchar_t* pRoot)
+{
+	if (pSvc_ && pLoc_)
+	{
+		return pSvc_;
+	}
+
+	Clear();
+
+	HRESULT hRes = CoInitializeSecurity(NULL, -1, NULL, NULL,
+		RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE, NULL);
+
+	if ((RPC_E_TOO_LATE != hRes) && FAILED(hRes))
+	{
+		return nullptr;
+	}
+
+	if (FAILED(CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&pLoc_)))
+	{
+		return nullptr;
+	}
+
+	if (FAILED(pLoc_->ConnectServer(_bstr_t(pRoot), NULL, NULL, 0, NULL, 0, 0, &pSvc_)))
+	{
+		return nullptr;
+	}
+
+	if (FAILED(CoSetProxyBlanket(pSvc_,
+		RPC_C_AUTHN_WINNT,
+		RPC_C_AUTHZ_NONE,
+		NULL,
+		RPC_C_AUTHN_LEVEL_CALL,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL,
+		EOAC_NONE)))
+	{
+
+		return nullptr;
+	}
+
+	return pSvc_;
+}
+
+void WmiService::Clear()
+{
+	if (pSvc_)
+	{
+		pSvc_->Release();
+		pSvc_ = nullptr;
+	}
+
+	if (pLoc_)
+	{
+		pLoc_->Release();
+		pLoc_ = nullptr;
+	}
+}

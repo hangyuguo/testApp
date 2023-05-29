@@ -1,7 +1,7 @@
 // preload.js
 
-// ËùÓÐµÄ Node.js API½Ó¿Ú ¶¼¿ÉÒÔÔÚ preload ½ø³ÌÖÐ±»µ÷ÓÃ.
-// ËüÓµÓÐÓëChromeÀ©Õ¹Ò»ÑùµÄÉ³ºÐ¡£
+// æ‰€æœ‰çš„ Node.js APIæŽ¥å£ éƒ½å¯ä»¥åœ¨ preload è¿›ç¨‹ä¸­è¢«è°ƒç”¨.
+// å®ƒæ‹¥æœ‰ä¸ŽChromeæ‰©å±•ä¸€æ ·çš„æ²™ç›’ã€‚
 
 window.addEventListener('DOMContentLoaded', () => {
   const replaceText = (selector, text) => {
@@ -12,4 +12,23 @@ window.addEventListener('DOMContentLoaded', () => {
   for (const dependency of ['chrome', 'node', 'electron']) {
     replaceText(`${dependency}-version`, process.versions[dependency])
   }
+})
+
+const { contextBridge, ipcRenderer  } = require('electron')
+
+contextBridge.exposeInMainWorld('versions', {
+  node: () => process.versions.node,
+  chrome: () => process.versions.chrome,
+  electron: () => process.versions.electron,
+  // èƒ½æš´éœ²çš„ä¸ä»…ä»…æ˜¯å‡½æ•°ï¼Œæˆ‘ä»¬è¿˜å¯ä»¥æš´éœ²å˜é‡
+  ping: () => ipcRenderer.invoke('ping'),
+})
+
+contextBridge.exposeInMainWorld('myAPI',{
+  desktop: true,
+  doAThing: () => {
+    console.log(`doAThing`)
+  },
+
+  loadPreferences: () => ipcRenderer.invoke('load-prefs'),
 })

@@ -18,5 +18,16 @@
     <ClCompile Include="NetworkDetect.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="NetInfo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="IpNotify.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NetInfo.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

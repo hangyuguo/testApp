@@ -11,7 +11,10 @@ int main(int argc, char** argv)
 	//getSysInfo();
 	//NetCardStateChange(true, "ZTN Adapter V1 #2");
 	//adapterTest2();
-	ChangeNetState();
+	//ChangeNetState();
+	//driverRestart();
+	std::vector<CAPITAL_HARDWARE> moniter_arr;
+	DetectMoniter(moniter_arr);
 
 	system("pause");
 	return 0;

@@ -13,10 +13,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="base64">
+      <UniqueIdentifier>{f0004a62-4eea-42e2-aba0-316840d5edf0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="testApp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="chatGptTest.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="gpt.h">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="gpt.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base64\base64.cpp">
+      <Filter>base64</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="base64\base64.h">
+      <Filter>base64</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

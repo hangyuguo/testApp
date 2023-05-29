@@ -44,6 +44,7 @@ void PrintIpForwardTable()
         struct in_addr inadMask;
         struct in_addr inadGateway;
         PMIB_IPADDRTABLE pIpAddrTable = NULL;
+        IF_INDEX dwForwardIfIndex;
 
         char szDestIp[128];
         char szMaskIp[128];
@@ -51,7 +52,7 @@ void PrintIpForwardTable()
 
         printf("Active Routes:\n\n");
 
-        printf("  Network Address          Netmask  Gateway Address        Interface  Metric\n");
+        printf("  Network Address          Netmask  Gateway Address        Interface  Metric  IfIndex\n");
         for (i = 0; i < pIpRouteTable->dwNumEntries; i++)
         {
             dwCurrIndex = pIpRouteTable->table[i].dwForwardIfIndex;
@@ -62,16 +63,19 @@ void PrintIpForwardTable()
             inadMask.s_addr = pIpRouteTable->table[i].dwForwardMask;
             // 网关地址
             inadGateway.s_addr = pIpRouteTable->table[i].dwForwardNextHop;
+            // ifindex
+            dwForwardIfIndex = pIpRouteTable->table[i].dwForwardIfIndex;
 
             strcpy_s(szDestIp, inet_ntoa(inadDest));
             strcpy_s(szMaskIp, inet_ntoa(inadMask));
             strcpy_s(szGatewayIp, inet_ntoa(inadGateway));
-            printf("  %15s %16s %16s %16d %7d\n",
+            printf("  %15s %16s %16s %16d %7d\n %7d",
                 szDestIp,
                 szMaskIp,
                 szGatewayIp,
                 pIpRouteTable->table[i].dwForwardIfIndex,    // 可以在此调用GetIpAddrTable获取索引对应的IP地址
-                pIpRouteTable->table[i].dwForwardMetric1);
+                pIpRouteTable->table[i].dwForwardMetric1),
+                dwForwardIfIndex;
         }
         //MyFreeIpForwardTable(pIpRouteTable);
     }

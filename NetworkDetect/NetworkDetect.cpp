@@ -1,23 +1,52 @@
 ﻿// NetworkDetect.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 
+#include "IpNotify.h"
+#include "NetInfo.h"
+
 #include <iostream>
 #include "netlistmgr.h"
+
+//#include "NetInfo.h"
+using namespace std;
 
 void networkDetect();
 int detectNetwork2();
 
+bool checkIsNetwork();
+bool GetNetworkStatus();
+
 class netInfo;
+
+
+
 
 int main()
 {
     std::cout << "Hello World!\n";
-	while(1){
-		//networkDetect();
-		detectNetwork2();
+	//while(1){
+	//	//networkDetect();
+	//	detectNetwork2();
+	//	Sleep(2000);
+	//}
+
+	/*auto ret = checkIsNetwork();
+	cout << "checkIsNetwork:" << ret << endl;
+
+	ret = GetNetworkStatus();
+	cout << "GetNetworkStatus:" << ret << endl;*/
+
+	//--------------------
+	/*init();
+	for (int i = 0; i < 30; i++) {
+		ShowNetworkInfo();
 		Sleep(2000);
-	}
+	}*/
+
+	//------------------
+	IPChangeNotify();
 	
+	system("pause");
 }
 
 
@@ -422,3 +451,48 @@ public:
 		NetInfoManager::GetInstance()->AddListener(eventHandler);
 	}
 };
+
+
+//-----------------------联网检测
+#include <Netlistmgr.h>    //检测是否联网头文件   
+
+bool checkIsNetwork() {
+	bool bol = true; //是否联网,联网 true,不联网 false   
+	CoInitialize(NULL);
+	//  通过NLA接口获取网络状态
+	IUnknown* pUnknown = NULL;
+	HRESULT Result = CoCreateInstance(CLSID_NetworkListManager, NULL, CLSCTX_ALL, IID_IUnknown, (void**)&pUnknown);
+	if (SUCCEEDED(Result))
+	{
+		INetworkListManager* pNetworkListManager = NULL;
+		if (pUnknown)
+			Result = pUnknown->QueryInterface(IID_INetworkListManager, (void**)&pNetworkListManager);
+		if (SUCCEEDED(Result))
+		{
+			VARIANT_BOOL IsConnect = VARIANT_FALSE;
+			if (pNetworkListManager)
+				Result = pNetworkListManager->get_IsConnectedToInternet(&IsConnect);
+			if (SUCCEEDED(Result))
+			{
+				bol = (IsConnect == VARIANT_TRUE) ? true : false;
+			}
+		}
+		if (pNetworkListManager)
+			pNetworkListManager->Release();
+	}
+	if (pUnknown)
+		pUnknown->Release();
+	CoUninitialize();
+	return bol;
+}
+
+#include <WinInet.h>
+#pragma comment(lib,"Wininet.lib")
+
+
+bool GetNetworkStatus()
+{
+	DWORD flag;
+	BOOL bConnectState = InternetGetConnectedState(&flag, 0);
+	return (bool)bConnectState;
+}

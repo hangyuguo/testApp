@@ -139,7 +139,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="NetInfo.cpp" />
     <ClCompile Include="NetworkDetect.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="IpNotify.h" />
+    <ClInclude Include="NetInfo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
